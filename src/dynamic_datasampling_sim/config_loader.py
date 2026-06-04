@@ -11,7 +11,7 @@ def load_config(path):
     """Load a simulation configuration from a YAML file."""
     config_path = Path(path)
 
-    # Read the user-provided YAML file into plain Python dictionarie
+    # Read the user-provided YAML file into plain Python dictionaries.
     with config_path.open("r", encoding="utf-8") as config_file:
         data = yaml.safe_load(config_file) or {}
 
@@ -30,8 +30,12 @@ def load_config(path):
         if key not in {"strategy", "environment"}
     }
 
-    return SimulationConfig(
+    config = SimulationConfig(
         **simulation_data,
         strategy=strategy,
         environment=environment,
     )
+
+    config.validate()
+    
+    return config
