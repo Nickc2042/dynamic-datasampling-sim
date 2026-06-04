@@ -66,3 +66,5 @@ class SimulationConfig:
 
     strategy: StrategyConfig = field(default_factory=StrategyConfig)
     environment: EnvironmentConfig = field(default_factory=EnvironmentConfig)
+
+# Add validation in near future to check for things like non-negative frequencies, probabilities between 0 and 1, etc.
