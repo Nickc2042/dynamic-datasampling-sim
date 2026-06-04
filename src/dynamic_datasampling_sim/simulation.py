@@ -1,11 +1,21 @@
 import numpy as np
 
+from . import simulation_config as config
 from .environment import environment
 from .sampling import get_sample, update_environ, update_strat
 from .strategy import strategy
 
 
-def run_simulation(strattype="WaitingTime", environtype="Preset", T=600):
+def run_simulation(strattype=None, environtype=None, T=None):
+    if strattype is None:
+        strattype = config.default_strategy_type # View simulation_config.py for details on any "config." variables
+    if environtype is None:
+        environtype = config.default_environment_type # defaults.py may be added in future updates for cleaner code
+    if T is None:
+        T = config.default_simulation_time
+
+    config.validate_config(simulation_time=T)
+
     # Strategy & environment initialization based on earlier choices
     strat = strategy(strattype=strattype)
     environ = environment(environtype=environtype)
