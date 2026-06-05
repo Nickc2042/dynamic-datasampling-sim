@@ -1,0 +1,78 @@
+# Example custom simulation config.
+# Copy this file, edit the values, then run:
+# .venv/bin/python scripts/run_demo.py --config pathToYourConfigFile".yml"
+
+# Strategy options currently supported by sampling.py:
+# - WaitingTime
+# - Responsive
+# - MOre to be added in future updates
+default_strategy_type: WaitingTime
+
+# Environment options currently supported by sampling.py:
+# - Preset: uses environment.preset_data directly
+# - Markovian: uses transition_probabilities and sample_probabilities
+# - TimeCorrelations: uses time_correlation_intervals
+# - OneState: uses the initial environment state and sample probabilities
+# - More to be added in future updates
+default_environment_type: Preset
+
+# Total simulation time. For Preset environments, include at least one extra preset_data value compared to default_simulation_time because the simulation updates the environment one step ahead.
+# Example: 25 values in preset_data, then default_simulation_time should be <= 24
+default_simulation_time: 24
+
+strategy:
+  # false starts the strategy in passive sampling mode
+  # true starts the strategy in active sampling mode
+  # For most,  false is recommended
+  initial_strategy_state: false
+
+  # true adds 10 to samples collected while the strategy is active.
+  # For example: 1 becomes 11, and 0 becomes 10.
+  high_quality_enabled: true
+
+  # Samples per time unit while active or passive.
+  # Higher frequency means smaller time steps and more samples.
+  # Active should usually be higher than passive, and initial should usually match passive
+  active_sampling_frequency: 2
+  passive_sampling_frequency: 1
+  initial_sampling_frequency: 1
+
+  # Number of samples the strategy remembers before changing state.
+  # mamory_cap can be adjusted, but initial_memory is recommended to be 0 for most strategies
+  memory_cap: 4
+  initial_memory: 0
+
+  # Cost values are [passive_cost, active_cost].
+  sampling_costs: [1, 2]
+  initial_current_cost: 1
+
+environment:
+  # false starts the environment inactive.
+  # true starts the environment active
+  initial_environment_state: false
+
+  # Markovian only: [true_to_false_probability, false_to_true_probability].
+  transition_probabilities: [0.05, 0.01]
+
+  # Markovian/OneState/TimeCorrelations:
+  # [probability_active_returns_relevant, probability_inactive_returns_irrelevant].
+  sample_probabilities: [0.9, 0.99]
+
+  # TimeCorrelations only: each pair is [start_time, end_time]
+  time_correlation_intervals:
+    - [4, 8]
+    - [14, 18]
+
+  # Preset only: each value is the environment state at that integer time.
+  # 0 means inactive/irrelevant environment.
+  # 1 means active/relevant environment.
+  # This example has 25 values for a 24-step run.
+  preset_data: [
+    0, 0, 0, 0,
+    1, 1, 1, 1,
+    0, 0, 0, 0,
+    0, 0, 1, 1,
+    1, 1, 0, 0,
+    0, 0, 0, 0,
+    0
+  ]
