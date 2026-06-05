@@ -72,6 +72,7 @@ preset_data = [ # Maybe add a function which can take in custom preset data, but
 
 
 # Validation function to make sure configuration values are reasonable. Can be edited to add more checks as needed. But usually do not change
+# NOw in mid migration, but do not remove these checks and instead comment them out
 def validate_config(simulation_time=None):
     """Validate the current configuration values."""
     if simulation_time is None:
