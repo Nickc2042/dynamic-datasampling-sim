@@ -32,12 +32,14 @@ Dynamic Data Sampling Simulation is a Python project for experimenting with adap
 
 - numpy
 - matplotlib
+- pyyaml
 
 ## Repository Structure
 
 - `README.md`
 - `requirements.txt`
 - `configs/`
+  - `custom_simulation_outline.yml`
   - `modulation.yml`
 - `scripts/`
   - `run_demo.py`
