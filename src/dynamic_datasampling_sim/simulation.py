@@ -1,6 +1,7 @@
 import numpy as np
 
 from . import simulation_config as config
+from .config import SUPPORTED_ENVIRONMENT_TYPES, SUPPORTED_STRATEGY_TYPES
 from .environment import environment
 from .sampling import get_sample, update_environ, update_strat
 from .strategy import strategy
@@ -16,7 +17,11 @@ def run_simulation(strattype = None, environtype = None, T = None, simulation_co
         if T is None:
             T = simulation_config.default_simulation_time
 
-        simulation_config.validate(simulation_time = T)
+        simulation_config.validate(
+            simulation_time = T,
+            strategy_type = strattype,
+            environment_type = environtype,
+        )
         strategy_config = simulation_config.strategy
         environment_config = simulation_config.environment
     
@@ -30,6 +35,10 @@ def run_simulation(strattype = None, environtype = None, T = None, simulation_co
             T = config.default_simulation_time
 
         config.validate_config(simulation_time = T)
+        if strattype not in SUPPORTED_STRATEGY_TYPES:
+            raise ValueError(f"strategy_type must be one of {sorted(SUPPORTED_STRATEGY_TYPES)}.")
+        if environtype not in SUPPORTED_ENVIRONMENT_TYPES:
+            raise ValueError(f"environment_type must be one of {sorted(SUPPORTED_ENVIRONMENT_TYPES)}.")
         strategy_config = None
         environment_config = None
 
