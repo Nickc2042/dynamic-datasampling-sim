@@ -56,12 +56,35 @@ Dynamic Data Sampling Simulation is a Python project for experimenting with adap
 
 ## Usage
 
-To Do
+Run the default YAML-driven simulation:
+```bash
+python3 scripts/run_demo.py
+```
+
+The script prints the simulation arrays and also saves a CSV file to:
+```bash
+outputs/simulation_results.csv
+```
+
+The CSV contains one row per sample:
+```csv
+time,environment_state,sample,cost
+```
+
+To use a custom simulation config and choose where the CSV is saved:
+```bash
+python3 scripts/run_demo.py --config configs/custom_simulation_outline.yml --output outputs/custom_results.csv
+```
+
+The CSV can be loaded into external visualization tools such as [RAWGraphs](https://www.rawgraphs.io/), Plotly Chart Studio, Excel, Google Sheets, or LibreOffice Calc. This keeps the project focused on simulation while letting users create whatever chart or graph they need from the exported data.
 
 ## Testing
 
-To Do
+To run tests with a custom configuration file, use:
+```bash
+.venv/bin/python scripts/run_demo.py --config path/to/config.yml
+```
 
 ## Status
 
-To Do
+The modulation feature was created using YAML-based configuration and is currently in testing. The system is being validated with various environment and strategy combinations to ensure correct behavior across different sampling scenarios.
