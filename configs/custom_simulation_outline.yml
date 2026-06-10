@@ -14,11 +14,11 @@ default_strategy_type: WaitingTime
 # - TimeCorrelations: uses time_correlation_intervals
 # - OneState: uses the initial environment state and sample probabilities
 # - More to be added in future updates
-default_environment_type: Preset
+default_environment_type: Markovian
 
 # Total simulation time. For Preset environments, include at least one extra preset_data value compared to default_simulation_time because the simulation updates the environment one step ahead.
 # Example: 25 values in preset_data, then default_simulation_time should be <= 24
-default_simulation_time: 24
+default_simulation_time: 1000
 
 strategy:
   # false starts the strategy in passive sampling mode
@@ -33,18 +33,20 @@ strategy:
   # Samples per time unit while active or passive.
   # Higher frequency means smaller time steps and more samples.
   # Active should usually be higher than passive, and initial should usually match passive
-  active_sampling_frequency: 2
+  active_sampling_frequency: 3 # Was 2
   passive_sampling_frequency: 1
   initial_sampling_frequency: 1
 
   # Number of samples the strategy remembers before changing state.
   # mamory_cap can be adjusted, but initial_memory is recommended to be 0 for most strategies
-  memory_cap: 4
+  memory_cap: 10 # Was 4
   initial_memory: 0
 
   # Cost values are [passive_cost, active_cost].
-  sampling_costs: [1, 2]
+  sampling_costs: [1, 1.5] # Was [1, 2]
   initial_current_cost: 1
+
+  # Justify intermediate state. Sage portal blogs. 
 
 environment:
   # false starts the environment inactive.
@@ -52,11 +54,11 @@ environment:
   initial_environment_state: false
 
   # Markovian only: [true_to_false_probability, false_to_true_probability].
-  transition_probabilities: [0.05, 0.01]
+  transition_probabilities: [0.01, 0.05] # Was [0.05, 0.01]
 
   # Markovian/OneState/TimeCorrelations:
   # [probability_active_returns_relevant, probability_inactive_returns_irrelevant].
-  sample_probabilities: [0.9, 0.99]
+  sample_probabilities: [0.94, 0.99] # Was [0.9, 0.99]
 
   # TimeCorrelations only: each pair is [start_time, end_time]
   time_correlation_intervals:

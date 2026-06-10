@@ -76,6 +76,11 @@ To use a custom simulation config and choose where the CSV is saved:
 python3 scripts/run_demo.py --config configs/custom_simulation_outline.yml --output outputs/custom_results.csv
 ```
 
+To also print a terminal summary of relevance, quality, and cost:
+```bash
+python3 scripts/run_demo.py --config configs/custom_simulation_outline.yml --summary
+```
+
 The CSV can be loaded into external visualization tools such as [RAWGraphs](https://www.rawgraphs.io/), Plotly Chart Studio, Excel, Google Sheets, or LibreOffice Calc. This keeps the project focused on simulation while letting users create whatever chart or graph they need from the exported data.
 
 ## Testing
@@ -88,3 +93,5 @@ To run tests with a custom configuration file, use:
 ## Status
 
 The modulation feature was created using YAML-based configuration and is currently in testing. The system is being validated with various environment and strategy combinations to ensure correct behavior across different sampling scenarios.
+
+# Add graph/chart of Henry preset data and explanation around top
