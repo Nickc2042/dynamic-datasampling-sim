@@ -1,43 +1,88 @@
 """Typed configuration objects for simulation settings."""
 
+# ============================================================
+# IMPORTS
+# ============================================================
 from dataclasses import dataclass, field
 import math
 from numbers import Real
 
 # Most of these settings are copied from simulation_config.py, but with slight adjustments to better fit the new structure
 
-SUPPORTED_STRATEGY_TYPES = {"Responsive", "WaitingTime"} # Add to this set when new strategy types are added in strategy.py
+
+# ============================================================
+# SUPPORTED TYPES
+# ============================================================
+SUPPORTED_STRATEGY_TYPES = {"Responsive", "WaitingTime", "Periodic", "Random", "Bayesian"} # Add to this set when new strategy types are added in strategy.py
+# Note: "CUSUM" is researched but not implemented yet — see outputs/current_strategies.md.
 SUPPORTED_ENVIRONMENT_TYPES = {"Markovian", "OneState", "Preset", "TimeCorrelations"} # Add to this set when new environment types are added in environment.py
 
 
+# ============================================================
+# VALIDATION HELPERS
+# ============================================================
 def _is_real_number(value): # A real number validator that returns False for bools, since bools are technically ints in Python but we don't want to allow them for numeric settings
     """Return True when value is a finite int/float, but not a bool."""
     return isinstance(value, Real) and not isinstance(value, bool) and math.isfinite(value)
 
+
+# ============================================================
+# STRATEGY CONFIG
+# ============================================================
 @dataclass
 class StrategyConfig:
     """Settings that control sampling strategy behavior."""
     # Default values here will still be the same from initial code
 
+    # ---- Core state ----
     initial_strategy_state: bool = False
     high_quality_enabled: bool = True
 
+    # ---- Sampling frequencies ----
     active_sampling_frequency: float = 1
     passive_sampling_frequency: float = 1
     initial_sampling_frequency: float = 1
 
-    memory_cap: int = 10
+    # ---- Memory ----
+    memory_cap: int = 40  # WaitingTime — see outputs/memory_cap_findings.md
+    responsive_memory_cap: int = 20  # Responsive — see outputs/hysteresis_findings.md (responsive vs waitingtime cap sweep)
     initial_memory: int = 0
 
+    # ---- Costs ----
     sampling_costs: list[float] = field(default_factory=lambda: [1, 2])
     initial_current_cost: float = 1
 
-    # VALIDATION below
+    # ---- Periodic strategy ----
+    # Periodic strategy: alternate between active for N decision steps, then passive for M decision steps
+    periodic_active_duration: int = 1
+    periodic_passive_duration: int = 1
+
+    # ---- Random strategy ----
+    # Random strategy: P(state = active) on each decision step
+    activation_probability: float = 0.5
+
+    # ---- Bayesian strategy ----
+    # Bayesian strategy: Bayes-filter posterior P(env=active | observations); fixed priors
+    bayesian_threshold: float = 0.5  # activate when belief > threshold
+    bayesian_p_activate: float = 0.01  # prior P(passive -> active) per decision step
+    bayesian_p_deactivate: float = 0.05  # prior P(active -> passive)
+    bayesian_p_rel_given_active: float = 0.9  # P(sample relevant | env active)
+    bayesian_p_rel_given_passive: float = 0.01  # P(sample relevant | env passive)
+
+    # ---- CUSUM strategy (researched, not implemented) ----
+    # Placeholder for a future Page's cumulative-sum change-point detector. Researched
+    # but not implemented yet — config fields intentionally omitted until it lands.
+    # See outputs/current_strategies.md for the design.
+
+    # ------------------------------------------------------------
+    # VALIDATION
+    # ------------------------------------------------------------
 
 
     def validate(self):
         """Validate strategy settings."""
 
+        # ---- Core state flags ----
         # Strategy state flags must be booleans because they directly control on/off behavior
         if not isinstance(self.initial_strategy_state, bool):
             raise ValueError("initial_strategy_state must be true or false.")
@@ -45,6 +90,7 @@ class StrategyConfig:
         if not isinstance(self.high_quality_enabled, bool):
             raise ValueError("high_quality_enabled must be true or false.")
 
+        # ---- Sampling frequencies ----
         # active/passive_sampling_frequency <= 0
         if not _is_real_number(self.active_sampling_frequency) or not _is_real_number(self.passive_sampling_frequency):
             raise ValueError("sampling frequencies must be numbers.")
@@ -57,16 +103,20 @@ class StrategyConfig:
         if self.initial_sampling_frequency <= 0:
             raise ValueError("initial_sampling_frequency must be greater than 0.")
 
-        # memory_cap <= 0 or initial_memory < 0
-        if not isinstance(self.memory_cap, int) or isinstance(self.memory_cap, bool):
-            raise ValueError("memory_cap must be an integer.")
-        if self.memory_cap <= 0:
-            raise ValueError("memory_cap must be greater than 0.")
+        # ---- Memory ----
+        # memory_cap and responsive_memory_cap must be positive integers
+        for field_name in ("memory_cap", "responsive_memory_cap"):
+            value = getattr(self, field_name)
+            if not isinstance(value, int) or isinstance(value, bool):
+                raise ValueError(f"{field_name} must be an integer.")
+            if value <= 0:
+                raise ValueError(f"{field_name} must be greater than 0.")
         if not isinstance(self.initial_memory, int) or isinstance(self.initial_memory, bool):
             raise ValueError("initial_memory must be an integer.")
         if self.initial_memory < 0:
             raise ValueError("initial_memory cannot be negative.")
 
+        # ---- Costs ----
         # Add Description
         if not isinstance(self.sampling_costs, list):
             raise ValueError("sampling_costs must be a list.")
@@ -77,15 +127,54 @@ class StrategyConfig:
         if not _is_real_number(self.initial_current_cost) or self.initial_current_cost < 0:
             raise ValueError("initial_current_cost must be a non-negative number.")
 
+        # ---- Periodic strategy ----
+        # Periodic strategy durations: positive integers (no degenerate corners)
+        for field_name in ("periodic_active_duration", "periodic_passive_duration"):
+            value = getattr(self, field_name)
+            if not isinstance(value, int) or isinstance(value, bool):
+                raise ValueError(f"{field_name} must be an integer.")
+            if value < 1:
+                raise ValueError(f"{field_name} must be at least 1.")
+
+        # ---- Random strategy ----
+        # Random strategy activation probability: in [0, 1]
+        if not _is_real_number(self.activation_probability):
+            raise ValueError("activation_probability must be a number.")
+        if self.activation_probability < 0 or self.activation_probability > 1:
+            raise ValueError("activation_probability must be between 0 and 1.")
+
+        # ---- Bayesian strategy ----
+        # Bayesian strategy: threshold, transition priors, likelihoods, initial belief all in [0, 1]
+        for field_name in (
+            "bayesian_threshold",
+            "bayesian_p_activate",
+            "bayesian_p_deactivate",
+            "bayesian_p_rel_given_active",
+            "bayesian_p_rel_given_passive",
+        ):
+            value = getattr(self, field_name)
+            if not _is_real_number(value):
+                raise ValueError(f"{field_name} must be a number.")
+            if value < 0 or value > 1:
+                raise ValueError(f"{field_name} must be between 0 and 1.")
+
+
+# ============================================================
+# ENVIRONMENT CONFIG
+# ============================================================
 @dataclass
 class EnvironmentConfig:
     """Settings that control environment state and sample generation."""
     # Default values here will still be the same from initial code
 
+    # ---- Core state ----
     initial_environment_state: bool = False
+
+    # ---- Probabilities ----
     transition_probabilities: list[float] = field(default_factory=lambda: [0.05, 0.01])
     sample_probabilities: list[float] = field(default_factory=lambda: [0.9, 0.99])
 
+    # ---- Time correlation intervals ----
     time_correlation_intervals: list[list[int]] = field(
         default_factory=lambda: [
             [6, 19],
@@ -107,18 +196,23 @@ class EnvironmentConfig:
             [575, 599],
         ]
     )
+    # ---- Preset data ----
     preset_data: list[int] = field(default_factory=list) # This is a placeholder for now
 
-    # VALIDATION below
+    # ------------------------------------------------------------
+    # VALIDATION
+    # ------------------------------------------------------------
 
 
     def validate(self, simulation_time, environment_type, strategy_config):
         """Validate environment settings."""
 
+        # ---- Core state ----
         # Environment state must be a boolean because sampling logic branches on active/inactive
         if not isinstance(self.initial_environment_state, bool):
             raise ValueError("initial_environment_state must be true or false.")
 
+        # ---- Probabilities ----
         # transition_probabilities and sample_probabilities must each contain two values between 0 and 1
         if not isinstance(self.transition_probabilities, list):
             raise ValueError("transition_probabilities must be a list.")
@@ -135,6 +229,7 @@ class EnvironmentConfig:
         ):
             raise ValueError("sample_probabilities must contain two values between 0 and 1.")
 
+        # ---- Time correlation intervals ----
         # time_correlation_intervals must contain [start, end] pairs with start < end
         if not isinstance(self.time_correlation_intervals, list):
             raise ValueError("time_correlation_intervals must be a list.")
@@ -153,6 +248,7 @@ class EnvironmentConfig:
         if environment_type== "TimeCorrelations" and len(self.time_correlation_intervals) == 0:
             raise ValueError("time_correlation_intervals cannot be empty for a TimeCorrelations environment.")
 
+        # ---- Preset data ----
         # Preset data should be an explicit 0/1 sequence so it can index environment states cleanly
         if not isinstance(self.preset_data, list):
             raise ValueError("preset_data must be a list.")
@@ -169,23 +265,31 @@ class EnvironmentConfig:
                 )
 
 
+# ============================================================
+# TOP-LEVEL SIMULATION CONFIG
+# ============================================================
 @dataclass
 class SimulationConfig:
     """Top-level settings for one simulation run."""
 
+    # ---- Run defaults ----
     default_strategy_type: str= "WaitingTime" # Maybe add some more comments later on to improve code readability?
     default_environment_type: str = "Preset" # Yet to move preset data, so this us more like a placeholder for now
     default_simulation_time: int = 600 # Default
 
+    # ---- Nested configs ----
     strategy: StrategyConfig = field(default_factory=StrategyConfig)
     environment: EnvironmentConfig = field(default_factory=EnvironmentConfig)
 
-    # VALIDATION below
-    
+    # ------------------------------------------------------------
+    # VALIDATION
+    # ------------------------------------------------------------
+
 
     def validate(self, simulation_time = None, strategy_type = None, environment_type = None):
         """Validate the full simulation configuration."""
 
+        # ---- Resolve defaults ----
         #
         if simulation_time is None:
             simulation_time = self.default_simulation_time
@@ -194,6 +298,7 @@ class SimulationConfig:
         if environment_type is None:
             environment_type = self.default_environment_type
 
+        # ---- Strategy / environment names ----
         # Validate the actual strategy/environment names that will be used for this run
         if strategy_type not in SUPPORTED_STRATEGY_TYPES:
             raise ValueError(f"strategy_type must be one of {sorted(SUPPORTED_STRATEGY_TYPES)}.")
@@ -201,6 +306,7 @@ class SimulationConfig:
         if environment_type not in SUPPORTED_ENVIRONMENT_TYPES:
             raise ValueError(f"environment_type must be one of {sorted(SUPPORTED_ENVIRONMENT_TYPES)}.")
 
+        # ---- Simulation time ----
         # default_simulation_time and simulation_time are greater than 0
         if not _is_real_number(self.default_simulation_time):
             raise ValueError("default_simulation_time must be a number.")
@@ -213,6 +319,7 @@ class SimulationConfig:
         if simulation_time <= 0:
             raise ValueError("simulation_time must be greater than 0.")
 
+        # ---- Nested config validation ----
         # Validate nested configs as well
         self.strategy.validate()
         self.environment.validate (

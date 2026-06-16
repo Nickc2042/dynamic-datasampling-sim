@@ -5,7 +5,10 @@
 # Strategy options currently supported by sampling.py:
 # - WaitingTime
 # - Responsive
-# - MOre to be added in future updates
+# - Periodic (baseline: alternates active/passive on a fixed schedule, ignores samples)
+# - Random (baseline: Bernoulli draw each step with P(active) = activation_probability)
+# - Bayesian (Bayes-filter posterior P(env=active | observations); fixed priors)
+# - More to be added in future updates (CUSUM is researched but not implemented yet)
 default_strategy_type: WaitingTime
 
 # Environment options currently supported by sampling.py:
@@ -38,15 +41,36 @@ strategy:
   initial_sampling_frequency: 1
 
   # Number of samples the strategy remembers before changing state.
-  # mamory_cap can be adjusted, but initial_memory is recommended to be 0 for most strategies
-  memory_cap: 10 # Was 4
+  # initial_memory is recommended to be 0 for most strategies.
+  memory_cap: 40 # WaitingTime only — see outputs/memory_cap_findings.md
+  responsive_memory_cap: 20 # Responsive only — see outputs/hysteresis_findings.md
   initial_memory: 0
 
   # Cost values are [passive_cost, active_cost].
   sampling_costs: [1, 1.5] # Was [1, 2]
   initial_current_cost: 1
 
-  # Justify intermediate state. Sage portal blogs. 
+  # Periodic strategy only: spend N decision steps active, then M decision steps passive, repeat.
+  # Both must be >= 1. Units are decision steps (i.e. update_strat calls), not time units.
+  periodic_active_duration: 5
+  periodic_passive_duration: 5
+
+  # Random strategy only: probability of activating on each decision step.
+  activation_probability: 0.5
+
+  # Bayesian strategy only: Bayes-filter posterior P(env=active | observations); fixed priors.
+  # Set the prior transitions and likelihoods to match the env you're running against for
+  # provably-optimal behavior on Markovian; mismatched values still work but lose optimality.
+  bayesian_threshold: 0.5  # activate when belief > threshold
+  bayesian_p_activate: 0.01  # prior P(passive -> active) per decision step
+  bayesian_p_deactivate: 0.05  # prior P(active -> passive)
+  bayesian_p_rel_given_active: 0.9  # P(sample relevant | env active)
+  bayesian_p_rel_given_passive: 0.01  # P(sample relevant | env passive)
+
+  # CUSUM strategy: researched but not implemented yet. When added, its config fields
+  # (cusum_h_up/h_down and likelihoods) go here. See outputs/current_strategies.md.
+
+  # Justify intermediate state. Sage portal blogs.
 
 environment:
   # false starts the environment inactive.

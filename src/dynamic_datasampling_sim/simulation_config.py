@@ -3,26 +3,66 @@
 Edit these values to customize the simulation without changing the core
 simulation logic.
 """
-# Simulation defaults
-default_strategy_type = "WaitingTime" # "WaitingTime", "Responsive"; update when more are added
+# ============================================================
+# SIMULATION DEFAULTS
+# ============================================================
+default_strategy_type = "WaitingTime" # "WaitingTime", "Responsive", "Periodic", "Random"; update when more are added
 default_environment_type = "Preset" # "Preset", "Markovian", "OneState", "TimeCorrelations"; update when more are added
 default_simulation_time = 600 # This value is usually changed
 
-# Strategy defaults
+
+# ============================================================
+# STRATEGY DEFAULTS
+# ============================================================
+# ---- Core state ----
 initial_strategy_state = False # Starts in active state when True
 high_quality_enabled = True # Adds high quality sample marker when active
+
+# ---- Sampling frequencies ----
 active_sampling_frequency = 1 # Try to have this higher or equal to passive_sampling_frequency
 passive_sampling_frequency = 1
 initial_sampling_frequency = 1 # Starting sample rate before strategy updates
-memory_cap = 10 # Samples remembered before state reset
+
+# ---- Memory ----
+memory_cap = 40 # WaitingTime — raised from 10 → 40 per outputs/memory_cap_findings.md
+responsive_memory_cap = 20 # Responsive — per outputs/hysteresis_findings.md (Responsive(20) weakly dominates WaitingTime(40) but isn't worth swapping the default strategy)
 initial_memory = 0 # Usually unchanged, but can be set to a positive value
+
+# ---- Costs ----
 sampling_costs = [1, 2]
 initial_current_cost = 1
 
-# Environment defaults
+# ---- Periodic strategy ----
+# Periodic strategy: alternate N decision steps active, then M decision steps passive
+periodic_active_duration = 1
+periodic_passive_duration = 1
+
+# ---- Random strategy ----
+# Random strategy: P(state = active) per decision step
+activation_probability = 0.5
+
+# ---- Bayesian strategy ----
+# Bayesian strategy: Bayes-filter posterior P(env=active | observations); fixed priors
+bayesian_threshold = 0.5  # activate when belief > threshold
+bayesian_p_activate = 0.01  # prior P(passive -> active) per decision step
+bayesian_p_deactivate = 0.05  # prior P(active -> passive)
+bayesian_p_rel_given_active = 0.9  # P(sample relevant | env active)
+bayesian_p_rel_given_passive = 0.01  # P(sample relevant | env passive)
+
+# ---- CUSUM strategy (researched, not implemented) ----
+# Placeholder for a future Page's cumulative-sum change-point detector.
+# Researched but not implemented yet — see outputs/current_strategies.md.
+
+
+# ============================================================
+# ENVIRONMENT DEFAULTS
+# ============================================================
+# ---- Core state & probabilities ----
 initial_environment_state = False # Starts active when True
 transition_probabilities = [0.05, 0.01]  # True-to-False, False-to-True
 sample_probabilities = [0.9, 0.99]  # True returns True, False returns False
+
+# ---- Time correlation intervals ----
 time_correlation_intervals = [
     [6, 19],
     [33, 40],
@@ -42,6 +82,7 @@ time_correlation_intervals = [
     [547, 559],
     [575, 599],
 ]
+# ---- Preset environment data ----
 preset_data = [ # Maybe add a function which can take in custom preset data, but keep this as default preset data
     0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -71,6 +112,9 @@ preset_data = [ # Maybe add a function which can take in custom preset data, but
 ]
 
 
+# ============================================================
+# VALIDATION
+# ============================================================
 # Validation function to make sure configuration values are reasonable. Can be edited to add more checks as needed. But usually do not change
 # NOw in mid migration, but do not remove these checks and instead comment them out
 def validate_config(simulation_time=None):

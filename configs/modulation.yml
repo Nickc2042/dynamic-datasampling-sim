@@ -13,11 +13,28 @@ strategy:
   passive_sampling_frequency: 1
   initial_sampling_frequency: 1
 
-  memory_cap: 10
+  memory_cap: 40 # WaitingTime; raised from 10 → 40 per outputs/memory_cap_findings.md
+  responsive_memory_cap: 20 # Responsive; per outputs/hysteresis_findings.md
   initial_memory: 0
 
   sampling_costs: [1, 2]
   initial_current_cost: 1
+
+  # Periodic strategy only
+  periodic_active_duration: 1
+  periodic_passive_duration: 1
+
+  # Random strategy only: P(state = active) per decision step
+  activation_probability: 0.5
+
+  # Bayesian strategy only: Bayes-filter posterior P(env=active | observations); fixed priors
+  bayesian_threshold: 0.5  # activate when belief > threshold
+  bayesian_p_activate: 0.01  # prior P(passive -> active) per decision step
+  bayesian_p_deactivate: 0.05  # prior P(active -> passive)
+  bayesian_p_rel_given_active: 0.9  # P(sample relevant | env active)
+  bayesian_p_rel_given_passive: 0.01  # P(sample relevant | env passive)
+
+  # CUSUM strategy: researched but not implemented yet — see outputs/current_strategies.md.
 
 environment:
   initial_environment_state: false

@@ -1,14 +1,23 @@
+# ============================================================
+# IMPORTS
+# ============================================================
 import numpy as np
 import matplotlib.pyplot as plt
 
 
+# ============================================================
+# SAMPLE PROCESSING
+# ============================================================
 def clean_samples(samples):
+    # ---- Strip quality marker ----
     # Removes the high quality / low quality marker on the samples
     rawsamples = np.mod(samples, 10)
 
+    # ---- Strip relevancy marker ----
     # Removes the relevant/irrelevant marker on the samples
     rawquality = np.floor(samples / 10)
 
+    # ---- Category counts ----
     # Counts the samples in each category:
     # [irrelevant/lowquality, relevant/lowquality, irrelevant/highquality, relevant/highquality]
     samplebreakdown = np.array([np.sum(samples == 0), np.sum(samples == 1), np.sum(samples == 10), np.sum(samples == 11)])
@@ -16,9 +25,13 @@ def clean_samples(samples):
     return rawsamples, rawquality, samplebreakdown
 
 
+# ============================================================
+# SAMPLES-OVER-TIME PLOT
+# ============================================================
 def plot_samples_over_time(times, samples):
     rawsamples, rawquality, samplebreakdown = clean_samples(samples)
 
+    # ---- Figure setup & background bands ----
     fig, ax = plt.subplots()
     ax.fill_between(
         times,
@@ -38,8 +51,11 @@ def plot_samples_over_time(times, samples):
         color="r",
         label="Relevant / High Quality",
     )
+    # ---- Sample / quality traces ----
     ax.plot(times, rawsamples + 0.2, "-", linewidth=1.0, color="k", label="Sample Relevancy")
     ax.plot(times, rawquality + 0.4, "-", color="#808080", label="Measurement Quality")
+
+    # ---- Legend, axes & title ----
     ax.legend(loc="upper right")
     ax.set_yticklabels([])
     ax.set_yticks([])
@@ -51,9 +67,13 @@ def plot_samples_over_time(times, samples):
     return fig, ax
 
 
+# ============================================================
+# SAMPLE BREAKDOWN PLOT
+# ============================================================
 def plot_sample_breakdown(samples, times):
     rawsamples, rawquality, samplebreakdown = clean_samples(samples)
 
+    # ---- Bar data ----
     fig, ax = plt.subplots()
     labels = [
         "Irrelevant\n Low Quality",
@@ -70,6 +90,7 @@ def plot_sample_breakdown(samples, times):
     bar_labels = ["green", "purple", "orange", "red"]
     bar_colors = ["tab:green", "tab:purple", "tab:orange", "tab:red"]
 
+    # ---- Bar plot & axes ----
     ax.bar(labels, counts, label=bar_labels, color=bar_colors)
     ax.set_ylabel("Proportion of Data")
     ax.set(ylim=(0, 1))

@@ -1,3 +1,6 @@
+# ============================================================
+# IMPORTS & PATH SETUP
+# ============================================================
 from pathlib import Path
 import sys
 import argparse
@@ -11,18 +14,24 @@ from src.dynamic_datasampling_sim.config_loader import load_config
 from src.dynamic_datasampling_sim.simulation import run_simulation
 
 
-def write_simulation_csv(path, times, states, samples, costs): # Writes the simulation results to a CSV file. Must update if new data is added to simulation output
+# ============================================================
+# CSV OUTPUT
+# ============================================================
+def write_simulation_csv(path, times, states, strat_states, samples, costs): # Writes the simulation results to a CSV file. Must update if new data is added to simulation output
     output_path = Path(path)
     output_path.parent.mkdir(parents = True, exist_ok = True)
 
     with output_path.open("w", newline = "", encoding = "utf-8") as csv_file:
         writer = csv.writer(csv_file)
-        writer.writerow(["time", "environment_state", "sample", "cost"])
-        writer.writerows(zip(times, states, samples, costs))
+        writer.writerow(["time", "environment_state", "strategy_state", "sample", "cost"])
+        writer.writerows(zip(times, states, strat_states, samples, costs))
 
     return output_path
 
 
+# ============================================================
+# SUMMARY BUILDING
+# ============================================================
 def build_simulation_summary(times, states, samples, costs):
     total_samples = samples.size
     relevant_samples = ((samples == 1) | (samples == 11)).sum()
@@ -45,6 +54,9 @@ def build_simulation_summary(times, states, samples, costs):
     }
 
 
+# ============================================================
+# SUMMARY PRINTING
+# ============================================================
 def print_simulation_summary(times, states, samples, costs):
     summary = build_simulation_summary(times, states, samples, costs)
     total_samples = summary["total_samples"]
@@ -77,7 +89,11 @@ def print_simulation_summary(times, states, samples, costs):
     print(f"Recorded Time Range: {summary['start_time']} to {summary['end_time']}")
 
 
+# ============================================================
+# MAIN ENTRY POINT
+# ============================================================
 def main():
+    # ---- Argument parsing ----
     parser = argparse.ArgumentParser() # Parse and allows uerse to specify a config file when running the demo
     parser.add_argument(
         "--config",
@@ -86,7 +102,7 @@ def main():
     )
     parser.add_argument(
         "--output",
-        default = PROJECT_ROOT / "outputs" / "simulation_results.csv", # "outputs" folder within the project root, where resutls will be stored
+        default = PROJECT_ROOT / "outputs" / "demo_runs" / "simulation_results.csv", # "outputs/demo_runs" folder within the project root, where single-run results will be stored
         help = "Path where simulation results will be saved as CSV.",
     )
     parser.add_argument(
@@ -96,10 +112,12 @@ def main():
     )
     args = parser.parse_args()
 
+    # ---- Run simulation & write CSV ----
     simulation_config = load_config(args.config)
-    times, states, samples, costs = run_simulation(simulation_config = simulation_config)
-    output_path = write_simulation_csv(args.output, times, states, samples, costs)
+    times, states, strat_states, samples, costs = run_simulation(simulation_config = simulation_config)
+    output_path = write_simulation_csv(args.output, times, states, strat_states, samples, costs)
 
+    # ---- Print run results ----
     print("Sample Times: ")
     print(times)
     print()
@@ -115,12 +133,17 @@ def main():
     print("Cost Over Time: ")
     print(costs)
 
+    # ---- Optional summary ----
     if args.summary:
         print_simulation_summary(times, states, samples, costs)
 
+    # ---- Report CSV location ----
     print()
     print(f"CSV Results Saved To: {output_path}") # terminal output to inform user where csv was saved
 
 
+# ============================================================
+# SCRIPT ENTRY
+# ============================================================
 if __name__ == "__main__":
     main()
