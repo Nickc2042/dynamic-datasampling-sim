@@ -29,6 +29,9 @@ def total_cost(costs):
 # ============================================================
 # TIME-WEIGHTED STATE METRICS
 # ============================================================
+# TODO(Ready): strat_states becomes 3-valued; project Ready->active here (it still captures).
+# Add time-in-Ready, resurgences-caught, cost-in-Ready metrics when it lands.
+
 def missed_active_fraction(times, env_states, strat_states):
     """Fraction of env-active TIME during which the strategy was passive.
 

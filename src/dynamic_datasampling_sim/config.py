@@ -69,6 +69,13 @@ class StrategyConfig:
     bayesian_p_rel_given_active: float = 0.9  # P(sample relevant | env active)
     bayesian_p_rel_given_passive: float = 0.01  # P(sample relevant | env passive)
 
+    # ---- TODO(Ready): not implemented yet ----
+    #   ready_enabled: bool = True             # global on/off
+    #   ready_sampling_frequency: float = ...  # close to active freq
+    #   ready_countdown: int = ...             # steps in Ready before -> Passive
+    #   ready_cost: float = ...                # between sampling_costs[0] and [1]
+    # Also add ready_* checks to validate() when these land.
+
     # ---- CUSUM strategy (researched, not implemented) ----
     # Placeholder for a future Page's cumulative-sum change-point detector. Researched
     # but not implemented yet — config fields intentionally omitted until it lands.

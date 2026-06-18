@@ -18,6 +18,8 @@ def get_sample(strat, environ, rng):
         sample = environ.state
 
     # ---- High quality modifier ----
+    # TODO(Ready) Ready reuses Active quality in v1. When Ready gets its own tier,
+    # rework the +10 encoding so the ==1/11 relevant-sample test still holds.
     if strat.highquality and strat.state:
         return sample + (10 * strat.state)
     else:
@@ -127,8 +129,26 @@ def update_strat(sample, strat, rng):
         strat.bayesian_belief = posterior / max(posterior + lik_passive * (1 - prior), 1e-12)
         strat.state = strat.bayesian_belief > strat.bayesian_threshold
 
+    # ---- TOD(Ready): tri-state wrapper (not implemented) ----
+    # strat.state = raw detection bool; strat.mode = {Passive, Active, Ready}:
+    #   detection = strat.state
+    #   if strat.mode == "Active" and not detection:
+    #       strat.mode = "Ready"; strat.ready_memory = 0
+    #   elif strat.mode == "Ready":
+    #       if (sample == 1) | (sample == 11):
+    #           strat.mode = "Active"; strat.state = True      # resurgence -> back to Active
+    #       else:
+    #           strat.ready_memory += 1
+    #           if strat.ready_memory >= strat.ready_countdown:
+    #               strat.mode = "Passive"; strat.state = False
+    #   elif detection:
+    #       strat.mode = "Active"                              # Passive -> Active (never via Ready)
+    #   else:
+    #       strat.mode = "Passive"
+
     # ---- Sampling frequency & cost update ----
-    # Update the sampling freq & current cost
+    # TODO(Ready): prepend a Ready tier before Active/Passive:
+    #   if strat.mode == "Ready": strat.freq = strat.freqREADY; strat.currentcost = strat.ready_cost
     if strat.state:
         strat.freq = strat.freqACT
         strat.currentcost = strat.costs[1]

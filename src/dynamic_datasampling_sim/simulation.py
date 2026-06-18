@@ -67,6 +67,8 @@ def run_simulation(strattype = None, environtype = None, T = None, simulation_co
     # times = the times at which we sample
     # states = the environment states at those times
     # strat_states = the strategy states (active/passive) at those times
+    # TODO (Ready): add a modes array recording strat.mode {Passive/Active/Ready};
+    # keep strat_states as the bool projection (Ready projects to active).
     # samples = the samples we get
     # costs = the cost at each time
     times = np.array([])

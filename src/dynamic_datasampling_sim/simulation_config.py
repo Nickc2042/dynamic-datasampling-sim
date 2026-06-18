@@ -49,6 +49,9 @@ bayesian_p_deactivate = 0.05  # prior P(active -> passive)
 bayesian_p_rel_given_active = 0.9  # P(sample relevant | env active)
 bayesian_p_rel_given_passive = 0.01  # P(sample relevant | env passive)
 
+# ---- TODO(Ready): not implemented yet ----
+# Add ready_enabled / ready_sampling_frequency / ready_countdown / ready_cost defaults here.
+
 # ---- CUSUM strategy (researched, not implemented) ----
 # Placeholder for a future Page's cumulative-sum change-point detector.
 # Researched but not implemented yet — see outputs/current_strategies.md.
