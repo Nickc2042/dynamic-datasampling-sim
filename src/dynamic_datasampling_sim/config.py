@@ -69,12 +69,16 @@ class StrategyConfig:
     bayesian_p_rel_given_active: float = 0.9  # P(sample relevant | env active)
     bayesian_p_rel_given_passive: float = 0.01  # P(sample relevant | env passive)
 
-    # ---- TODO(Ready): not implemented yet ----
-    #   ready_enabled: bool = True             # global on/off
-    #   ready_sampling_frequency: float = ...  # close to active freq
-    #   ready_countdown: int = ...             # steps in Ready before -> Passive
-    #   ready_cost: float = ...                # between sampling_costs[0] and [1]
-    # Also add ready_* checks to validate() when these land.
+    # ---- Ready strategy (trinary expansion) ----
+    # Ready strategy: the after-Active watch state. Entered from Active when the event
+    # seems to be ending; samples nearly as aggressively as Active to catch resurgence,
+    # then returns to Passive after a fixed quiet countdown.
+
+    # Note to sefl: I still don't like having two configs. After Ready state implementation, do something about this
+    ready_enabled: bool = True  # global on/off; when False, behavior is the original Passive/Active binary
+    ready_sampling_frequency: float = 1  # sample rate in Ready, keep close to active freq so resurgence isn't missed
+    ready_countdown: int = 5  # quiet (no relevant data) steps in Ready before -> Passive
+    ready_cost: float = 1.5  # cost per sample in Ready, between sampling_costs[0] and [1]
 
     # ---- CUSUM strategy (researched, not implemented) ----
     # Placeholder for a future Page's cumulative-sum change-point detector. Researched
@@ -164,6 +168,27 @@ class StrategyConfig:
                 raise ValueError(f"{field_name} must be a number.")
             if value < 0 or value > 1:
                 raise ValueError(f"{field_name} must be between 0 and 1.")
+
+        # ---- Ready strategy ----
+        # ready_enabled gates the whole trinary state machine, so it must be a boolean
+        if not isinstance(self.ready_enabled, bool):
+            raise ValueError("ready_enabled must be true or false.")
+
+        # ready_sampling_frequency mirrors the active/passive frequency checks: a positive number
+        if not _is_real_number(self.ready_sampling_frequency):
+            raise ValueError("ready_sampling_frequency must be a number.")
+        if self.ready_sampling_frequency <= 0:
+            raise ValueError("ready_sampling_frequency must be greater than 0.")
+
+        # ready_countdown counts decision steps, so it must be a positive integer (>= 1)
+        if not isinstance(self.ready_countdown, int) or isinstance(self.ready_countdown, bool):
+            raise ValueError("ready_countdown must be an integer.")
+        if self.ready_countdown < 1:
+            raise ValueError("ready_countdown must be at least 1.")
+
+        # ready_cost is a per-sample cost like sampling_costs, so it must be non-negative
+        if not _is_real_number(self.ready_cost) or self.ready_cost < 0:
+            raise ValueError("ready_cost must be a non-negative number.")
 
 
 # ============================================================

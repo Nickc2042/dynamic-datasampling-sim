@@ -49,8 +49,14 @@ bayesian_p_deactivate = 0.05  # prior P(active -> passive)
 bayesian_p_rel_given_active = 0.9  # P(sample relevant | env active)
 bayesian_p_rel_given_passive = 0.01  # P(sample relevant | env passive)
 
-# ---- TODO(Ready): not implemented yet ----
-# Add ready_enabled / ready_sampling_frequency / ready_countdown / ready_cost defaults here.
+# ---- Ready strategy (trinary expansion) ----
+# Ready: the after-Active watch state. Entered from Active when the event seems to be
+# ending; samples nearly as aggressively as Active to catch resurgence, but returns to
+# Passive after a fixed quiet countdown. See Trinary_Expansion design doc.
+ready_enabled = True  # Master on/off switch for the Ready state; when False, behavior is the original Passive/Active binary
+ready_sampling_frequency = 1  # Sample rate in Ready, keep close to active_sampling_frequency so resurgence isn't missed
+ready_countdown = 5  # Consecutive quiet (no relevant data) steps in Ready before returning to Passive. Note to self: Run a sweep to find best values
+ready_cost = 1.5  # Cost per sample in Ready, between sampling_costs[0] (passive) and sampling_costs[1] (active)
 
 # ---- CUSUM strategy (researched, not implemented) ----
 # Placeholder for a future Page's cumulative-sum change-point detector.

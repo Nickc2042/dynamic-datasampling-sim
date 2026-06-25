@@ -45,8 +45,11 @@ def _legacy_strategy_config():
         bayesian_p_rel_given_active = default_config.bayesian_p_rel_given_active,
         bayesian_p_rel_given_passive = default_config.bayesian_p_rel_given_passive, # supports new variables for future expansion without needing to change this function. Add after this line
 
-        # ---- TODO (Ready): not implemented ----
-        # Pass ready_enabled / ready_sampling_frequency / ready_countdown / ready_cost here.
+        # ---- Ready strategy (trinary expansion) ----
+        ready_enabled = default_config.ready_enabled,
+        ready_sampling_frequency = default_config.ready_sampling_frequency,
+        ready_countdown = default_config.ready_countdown,
+        ready_cost = default_config.ready_cost,
 
         # ---- CUSUM strategy parameters (researched, not implemented) ----
         # Placeholder — add cusum_* params here when the strategy is added.
@@ -97,14 +100,17 @@ class strategy:
         self.bayesian_belief = 0.5
         # If new variables are added to StrategyConfig, they have to be added here as well to be used in the strategy class. Add after this line
 
-        # ---- TODO(Ready): not implemented ----
-        # self.state = raw detection bool; self.mode = {Passive, Active, Ready}. When implemented:
-        #   self.mode = "Passive"
-        #   self.ready_enabled = strategy_config.ready_enabled
-        #   self.freqREADY = strategy_config.ready_sampling_frequency
-        #   self.ready_countdown = strategy_config.ready_countdown
-        #   self.ready_memory = 0
-        #   self.ready_cost = strategy_config.ready_cost
+        # ---- Ready strategy (trinary expansion) ----
+        # self.state stays the raw per-strategy detection bool (untouched by Ready logic).
+        # self.mode is the tri-state authority that sampling/cost/metrics read:
+        #   "Passive" -> "Active" -> "Ready" -> "Passive"  (and "Ready" -> "Active" on resurgence)
+        # Passive enters Active directly; Ready is only ever reached from Active.
+        self.mode = "Passive"
+        self.ready_enabled = strategy_config.ready_enabled
+        self.freqREADY = strategy_config.ready_sampling_frequency
+        self.ready_countdown = strategy_config.ready_countdown
+        self.ready_memory = 0  # counts consecutive quiet steps in Ready toward ready_countdown
+        self.ready_cost = strategy_config.ready_cost
 
         # ---- CUSUM strategy parameters (researched, not implemented) ----
         # Placeholder — add cusum_h_up/h_down/likelihoods and the s_up/s_down
